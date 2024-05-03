@@ -1,6 +1,8 @@
 package com.example.weatherapp
 
+import android.content.ContentValues.TAG
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,36 +13,42 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.weatherapp.ui.theme.WeatherAppTheme
+import com.google.gson.internal.GsonBuildConfig
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.create
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            WeatherAppTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    Greeting("Android")
-                }
-            }
+            fetchWeatherData()
         }
     }
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+fun fetchWeatherData(){
+    val retrofit = Retrofit.Builder()
+        .baseUrl("https://api.openweathermap.org/data/2.5/")
+        .build()
+        .create(ApiInterface::class.java)
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    WeatherAppTheme {
-        Greeting("Android")
-    }
+    val response = retrofit.getWeatherData("Tampere", "d830da4c62dddd583303d8192c2e544c", "metric")
+    response.enqueue((object : Callback<WeatherApp>{
+        override fun onResponse(call: Call<WeatherApp>, response: Response<WeatherApp>) {
+            val responseBody = response.body();
+            if (response.isSuccessful && responseBody != null){
+                val temperature = responseBody.main.temp
+                Log.d(TAG, "onResponse: $temperature")
+            }
+        }
+
+        override fun onFailure(call: Call<WeatherApp>, t: Throwable) {
+            TODO("Not yet implemented")
+        }
+
+    }))
 }
