@@ -39,12 +39,36 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun weatherScreen(){
     val temperatureState = remember { mutableStateOf<String?>(null) }
+    val humidityState = remember { mutableStateOf<Double?>(null) }
+    val windSpeedState = remember { mutableStateOf<Double?>(null) }
+    val sunriseState = remember { mutableStateOf<String?>(null) }
+    val sunsetState = remember { mutableStateOf<String?>(null) }
     val cityState = remember { mutableStateOf(TextFieldValue()) }
     val fetchWeatherDataForCity = {
         temperatureState.value = null
-        fetchWeatherData(cityState.value.text) { temperature ->
-            temperatureState.value = temperature
-        }
+        humidityState.value = null
+        windSpeedState.value = null
+        sunriseState.value = null
+        sunsetState.value = null
+
+        fetchWeatherData(
+            cityName = cityState.value.text,
+            onTemperatureReceived = { temperature ->
+                temperatureState.value = temperature
+            },
+            onHumidityReceived = { humidity ->
+                humidityState.value = humidity
+            },
+            onWindSpeedReceived = { windSpeed ->
+                windSpeedState.value = windSpeed
+            },
+            onSunRiseReceived = { sunrise ->
+                sunriseState.value = sunrise
+            },
+            onSunSetReceived = { sunset ->
+                sunsetState.value = sunset
+            }
+        )
     }
     Column {
         // Text field for entering the city name
@@ -58,15 +82,30 @@ fun weatherScreen(){
             Text("Search")
         }
         // Display the temperature on the screen
-        Surface(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
             temperatureState.value?.let { temperature ->
                 Text(text = "Temperature: $temperature")
+            }
+            humidityState.value?.let { humidity ->
+                Text(text = "Humidity: $humidity")
+            }
+            windSpeedState.value?.let { windspeed ->
+                Text(text = "Wind Speed: $windspeed")
+            }
+            sunriseState.value?.let { sunrise ->
+                Text(text = "Sunrise: $sunrise")
+            }
+            sunsetState.value?.let { sunset ->
+                Text(text = "Sunset: $sunset")
             }
         }
     }
 }
 
-fun fetchWeatherData(cityName: String, onTemperatureReceived: (String) -> Unit){
+fun fetchWeatherData(cityName: String, onTemperatureReceived: (String) -> Unit,
+                     onHumidityReceived: (Double) -> Unit, onWindSpeedReceived: (Double) -> Unit,
+                     onSunRiseReceived: (String) -> Unit,
+                     onSunSetReceived: (String) -> Unit){
     val retrofit = Retrofit.Builder()
         .baseUrl("https://api.openweathermap.org/data/2.5/")
         .addConverterFactory(GsonConverterFactory.create()) // Add Gson converter factory
@@ -79,8 +118,20 @@ fun fetchWeatherData(cityName: String, onTemperatureReceived: (String) -> Unit){
             val responseBody = response.body();
             if (response.isSuccessful && responseBody != null){
                 val temperature = responseBody.main.temp.toString()
-                onTemperatureReceived(temperature)
-                Log.d("TAG", "$temperature")
+                val humidity = responseBody.main.humidity.toDouble()
+                val windSpeed = responseBody.wind.speed.toDouble()
+                val sunrise = responseBody.sys.sunrise.toString()
+                val sunset = responseBody.sys.sunset.toString()
+                onTemperatureReceived(temperature);
+                onHumidityReceived(humidity);
+                onWindSpeedReceived(windSpeed);
+                onSunRiseReceived(sunrise);
+                onSunSetReceived(sunset);
+                Log.d("TAG", temperature)
+                Log.d("TAG", "$humidity")
+                Log.d("TAG", "$windSpeed")
+                Log.d("TAG", sunrise)
+                Log.d("TAG", sunset)
             }
         }
 
