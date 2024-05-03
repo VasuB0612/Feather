@@ -18,6 +18,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.create
 
 class MainActivity : ComponentActivity() {
@@ -33,6 +34,7 @@ class MainActivity : ComponentActivity() {
 fun fetchWeatherData(){
     val retrofit = Retrofit.Builder()
         .baseUrl("https://api.openweathermap.org/data/2.5/")
+        .addConverterFactory(GsonConverterFactory.create()) // Add Gson converter factory
         .build()
         .create(ApiInterface::class.java)
 
@@ -42,7 +44,7 @@ fun fetchWeatherData(){
             val responseBody = response.body();
             if (response.isSuccessful && responseBody != null){
                 val temperature = responseBody.main.temp
-                Log.d(TAG, "onResponse: $temperature")
+                Log.d(TAG, "Temperature = $temperature")
             }
         }
 
