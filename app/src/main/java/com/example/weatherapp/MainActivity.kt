@@ -13,7 +13,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -25,8 +28,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,6 +39,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LiveData
@@ -65,9 +71,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun weatherScreen(navController: NavHostController, latitude: Double, longitude: Double) {
-//    val locationViewModel: LocationViewModel = viewModel()
-//    val latitude = locationViewModel.latitude.value
-//    val longitude = locationViewModel.longitude.value
     val temperatureState = remember { mutableStateOf<String?>(null) }
     val humidityState = remember { mutableStateOf<Double?>(null) }
     val windSpeedState = remember { mutableStateOf<Double?>(null) }
@@ -192,10 +195,21 @@ fun weatherScreen(navController: NavHostController, latitude: Double, longitude:
                         )
                     }
                 }
-                Button(onClick = { 
-                    navController.navigate("weatherScreenLatLong/${latitude}/${longitude}")
-                }) {
-                    Text("current temperature")
+                Box(
+                    modifier = Modifier.fillMaxHeight().padding(16.dp),
+                    contentAlignment = Alignment.BottomCenter
+                ){
+                    Button(
+                        onClick = {
+                            navController.navigate("weatherScreenLatLong/${latitude}/${longitude}")
+                        },
+                        colors = ButtonDefaults.buttonColors(Color(20, 20, 20)),
+                    ) {
+                        Text(
+                            "Current Location",
+                            color = Color.Magenta
+                        )
+                    }
                 }
 //            humidityState.value?.let { humidity ->
 //                Text(text = "Humidity: $humidity")
@@ -234,20 +248,42 @@ fun requestLocation(navController: NavHostController) {
                 )
             )
     )
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier.fillMaxSize()
-    ) {
+    {
         if (!locationPermissionState.status.isGranted) {
-            Button(
-                onClick = {
-                    locationPermissionState.launchPermissionRequest()
-                },
-                modifier = Modifier.padding(bottom = 30.dp),
-                colors = ButtonDefaults.buttonColors(Color(30, 30, 30))
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Permission")
+                Text(
+                    text = "Welcome to Feather",
+                    fontSize = 40.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 20.dp)
+                )
+            }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Button(
+                    onClick = {
+                        locationPermissionState.launchPermissionRequest()
+                    },
+                    modifier = Modifier.padding(bottom = 30.dp),
+                    colors = ButtonDefaults.buttonColors(Color(30, 30, 30))
+                ) {
+                    Text(
+                        text = "Permission",
+                        color = Color.Magenta
+                    )
+                }
+                Text(
+                    text = "Grant access to your location for accurate weather forecasts.",
+                    modifier = Modifier.padding(7.dp),
+                    fontSize = 17.sp,
+                    textAlign = TextAlign.Center,
+                )
             }
         } else {
             val location = locationManager.getLastKnownLocation(LocationManager.FUSED_PROVIDER)
@@ -255,10 +291,7 @@ fun requestLocation(navController: NavHostController) {
                 val latitude = location.latitude
                 val longitude = location.longitude
                 Log.d("latspread", "Latitude ${latitude} and Longitude ${longitude}")
-//                weatherScreen(navController, latitude, longitude)
-//                locationViewModel.setLocation(latitude, longitude)
-                // Navigate to the next destination
-                navController.navigate("weatherScreen/${latitude}/${longitude}")
+                navController.navigate("weatherScreenLatLong/${latitude}/${longitude}")
             }
         }
     }
@@ -267,9 +300,7 @@ fun requestLocation(navController: NavHostController) {
 @Composable
 fun App(){
     val navController = rememberNavController()
-//    val locationViewModel: LocationViewModel = viewModel()
-//    val latitude = locationViewModel.latitude.value
-//    val longitude = locationViewModel.longitude.value
+
     NavHost(navController, startDestination = "requestLocation") {
         composable("requestLocation") {
             requestLocation(navController)
@@ -289,24 +320,103 @@ fun App(){
 
 @Composable
 fun weatherScreenLatLong(navController: NavHostController, latitude: Double, longitude: Double){
-//    val locationViewModel: LocationViewModel = viewModel()
-//    val latitude = locationViewModel.latitude.value
-//    val longitude = locationViewModel.longitude.value
-    Column (
+    val retrofit = Retrofit.Builder()
+        .baseUrl("https://api.openweathermap.org/data/2.5/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+        .create(ApiInterface::class.java)
+    var temperature by remember { mutableStateOf<Double?>(null) }
+    var description by remember { mutableStateOf<String?>(null) }
+    var cityName by remember { mutableStateOf<String?>(null) }
+
+    val response = retrofit.getWeatherDataByLatLon(latitude, longitude, "d830da4c62dddd583303d8192c2e544c")
+    response.enqueue(object : Callback<WeatherApp> {
+        override fun onResponse(call: Call<WeatherApp>, response: Response<WeatherApp>) {
+            val responseBody = response.body()
+            if (response.isSuccessful && responseBody != null) {
+                temperature = responseBody.main.temp
+                description = responseBody.weather.firstOrNull()?.description ?: "Unknown"
+                cityName = responseBody.name
+            }
+        }
+        override fun onFailure(call: Call<WeatherApp>, t: Throwable) {
+            Log.e("WeatherAPI", "Failed to fetch weather data: ${t.message}")
+        }
+    })
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color.LightGray,
+                        Color.DarkGray
+                    )
+                )
+            )
+    )
+    Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
         modifier = Modifier.fillMaxSize()
-    ){
-        Text("Latitude ${latitude} and Longitude ${longitude}");
-        Log.d("latlong", "Latitude ${latitude} and Longitude ${longitude}")
-        Button(onClick = {
-            navController.navigate("weatherScreen/${latitude}/${longitude}")
-        }) {
-            Text("Back")
+    ) {
+        // Title
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Current Weather Forecast",
+                fontSize = 32.sp
+            )
+        }
+        // Content
+        Box(
+            modifier = Modifier.weight(1f).offset(y = (-90).dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                cityName?.let { Text("$it", fontSize = 30.sp) }
+                Spacer(modifier = Modifier.height(90.dp))
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    description?.let { Text("$it", fontSize = 20.sp) }
+                    Spacer(modifier = Modifier.width(100.dp))
+                    temperature?.let {
+                        val formattedTemperature = String.format("%.2f", it - 273.15)
+                        Text("$formattedTemperature °C", fontSize = 40.sp )
+                    }
+                }
+            }
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Button(
+                onClick = {
+                    navController.navigate("weatherScreen/${latitude}/${longitude}")
+                },
+                colors = ButtonDefaults.buttonColors(Color(20, 20, 20))
+            ) {
+                Text(
+                    "Other Cities",
+                    color = Color.Magenta
+                )
+            }
         }
     }
 }
-
 fun fetchWeatherData1(
     cityName: String, onCityReceived: (String) -> Unit,
     onTemperatureReceived: (String) -> Unit,
@@ -350,16 +460,3 @@ fun fetchWeatherData1(
         }
     }))
 }
-
-//class LocationViewModel : ViewModel() {
-//    private val _latitude = MutableLiveData<Double>()
-//    val latitude: LiveData<Double> = _latitude
-//
-//    private val _longitude = MutableLiveData<Double>()
-//    val longitude: LiveData<Double> = _longitude
-//
-//    fun setLocation(latitude: Double, longitude: Double) {
-//        _latitude.value = latitude
-//        _longitude.value = longitude
-//    }
-//}
