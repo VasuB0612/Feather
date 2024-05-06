@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -37,7 +39,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -174,19 +178,42 @@ fun weatherScreen(navController: NavHostController, latitude: Double, longitude:
                     )
                 }
                 Row {
-                    descriptionState.value?.let { description ->
-                        Log.d("Description", description)
-                        Text(
-                            description,
-                            modifier = Modifier
-                                .padding(top = 162.dp)
-                                .padding(end = 60.dp),
-                            color = Color(20, 20, 20),
-                            fontSize = 19.sp
-                        )
+                    Column {
+                        descriptionState.value?.let { description ->
+                            val drawableResId = when (description.lowercase()) {
+                                "sunny", "clear sky", "clear" -> R.drawable.sunny
+                                "light rain", "drizzle", "moderate rain", "showers", "heavy rain" -> R.drawable.rainy
+                                "scattered clouds", "few clouds","overcast clouds", "broken clouds", "partly clouds", "overcast", "clouds", "mist", "haze", "foggy" -> R.drawable.cloudy
+                                "light snow", "heavy snow", "moderate snow", "blizzard" -> R.drawable.snowy
+                                else -> null
+                            }
+                            drawableResId?.let { resourceId ->
+                                Image(
+                                    painter = painterResource(id = resourceId),
+                                    contentDescription = "Weather Icon: $description",
+                                    modifier = Modifier
+                                        .size(130.dp)
+                                        .offset(y = 103.dp)
+                                )
+                            }
+                        }
+                        Box(
+                            Modifier.offset(y = (-50).dp).align(Alignment.CenterHorizontally)
+                        ){
+                            descriptionState.value?.let { description ->
+                                Log.d("Description", description)
+                                Text(
+                                    description,
+                                    modifier = Modifier
+                                        .padding(top = 162.dp),
+                                    color = Color(20, 20, 20),
+                                    fontSize = 15.sp
+                                )
+                            }
+                        }
                     }
+                    Spacer(modifier = Modifier.width(80.dp))
                     temperatureState.value?.let { temperature ->
-                        Log.d("Temperature", temperature)
                         Text(
                             "${temperature} °C",
                             modifier = Modifier.padding(top = 150.dp),
@@ -196,7 +223,9 @@ fun weatherScreen(navController: NavHostController, latitude: Double, longitude:
                     }
                 }
                 Box(
-                    modifier = Modifier.fillMaxHeight().padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(16.dp),
                     contentAlignment = Alignment.BottomCenter
                 ){
                     Button(
@@ -373,7 +402,9 @@ fun weatherScreenLatLong(navController: NavHostController, latitude: Double, lon
         }
         // Content
         Box(
-            modifier = Modifier.weight(1f).offset(y = (-90).dp),
+            modifier = Modifier
+                .weight(1f)
+                .offset(y = (-90).dp),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -386,15 +417,29 @@ fun weatherScreenLatLong(navController: NavHostController, latitude: Double, lon
                 Row(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    description?.let { Text("$it", fontSize = 20.sp) }
-                    Spacer(modifier = Modifier.width(100.dp))
+                    val drawableResId = when (description?.lowercase()) {
+                        "sunny", "clear sky", "clear" -> R.drawable.sunny
+                        "light rain", "drizzle", "moderate rain", "showers", "heavy rain" -> R.drawable.rainy
+                        "scattered clouds", "few clouds", "overcast clouds", "broken clouds", "partly clouds", "overcast", "clouds", "mist", "haze", "foggy" -> R.drawable.cloudy
+                        "light snow", "heavy snow", "moderate snow", "blizzard" -> R.drawable.snowy
+                        else -> null
+                    }
+                    drawableResId?.let { resourceId ->
+                        Image(
+                            painter = painterResource(id = resourceId),
+                            contentDescription = "Weather Icon: $description",
+                            modifier = Modifier.size(135.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(70.dp))
                     temperature?.let {
                         val formattedTemperature = String.format("%.2f", it - 273.15)
                         Text("$formattedTemperature °C", fontSize = 40.sp )
                     }
                 }
+
             }
         }
         Box(
