@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Weather App</string>
+    <string name="search_button_text">Hae</string>
+    <string name="label_text">Anna Kaunpungin Nimi</string>
+    <string name="title">Nykyinen sääennuste</string>
+    <string name="sunny">Aurinkoinen</string>
+    <string name="clear_sky">Kirkas taivas</string>
+    <string name="clear">"Kirkas "</string>
+    <string name="light_rain">Kevyt sade</string>
+    <string name="drizzle">Tihkusade</string>
+    <string name="moderate_rain">Kohtalainen sade</string>
+    <string name="showers">Sade</string>
+    <string name="heavy_rain">Rankkasade</string>
+    <string name="scattered_clouds">Hajanaiset pilvet</string>
+    <string name="few_clouds">"Vähän pilviä "</string>
+    <string name="overcast_clouds">Pilvistä</string>
+    <string name="broken_clouds">Rikkoutuneet pilvet</string>
+    <string name="partly_clouds">Puolipilvistä</string>
+    <string name="overcast">Pilvinen</string>
+    <string name="clouds">Pilvinen</string>
+    <string name="mist">Sumu</string>
+    <string name="haze">"Usva "</string>
+    <string name="foggy">Sumuinen</string>
+    <string name="light_snow">Kevyt lumi</string>
+    <string name="heavy_snow">Raskas lumi</string>
+    <string name="moderate_snow">Kohtalaista  lunta</string>
+    <string name="blizzard">Lumimyrsky</string>
+    <string name="default_description">Ei tiedot</string>
+    <string name="permission_button">Lupa</string>
+    <string name="current_location_button">Tämänhetkinen olinpaikka</string>
+    <string name="other_cities_button">Muita kaupunkeja</string>
+    <string name="welcome_to_feather">Tervetuloa Featheriin</string>
+    <string name="grant_access_text">Anna pääsy sijaintiisi tarkkoja sääennusteita varten.</string>
+</resources>
